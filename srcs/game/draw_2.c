@@ -1,0 +1,72 @@
+
+#include "../../main.h"
+
+void	draw_water(t_env *env, t_data *datas)
+{
+	draw_rect(datas, (t_coordinates){0, 0}, (t_coordinates){
+		env->win_max_dimensions.x, env->win_max_dimensions.y},
+		COLOR_WATER);
+}
+
+void	draw_objects(t_env *env, t_data *datas)
+{
+	t_coordinates	current;
+	int				ret;
+
+	ret = EXIT_SUCCESS;
+	current = (t_coordinates){0, 0};
+	while (current.y < env->map_array.height)
+	{
+		while (current.x < env->map_array.width)
+		{
+			if (env->map_array.lines[current.y][current.x]
+					!= AUTHORIZED_ON_MAP_TILE)
+				draw_block(env, datas, find_asset_index_for(env,
+						env->map_array.lines[current.y][current.x]),
+					(t_coordinates){current.x * TILE_SIZE, current.y
+					* TILE_SIZE});
+			current.x++;
+		}
+		current.y++;
+		current.x = 0;
+	}
+}
+
+void	increase_last_frame(t_env *env, t_coordinates *coos)
+{
+	env->frame_count++;
+	coos->x = (env->frame_count / 100) % 7 * TILE_SIZE;
+	coos->y = 0;
+}
+
+void	draw_main(t_env *env, t_data *datas)
+{
+	t_coordinates	start_src;
+
+	start_src = (t_coordinates){};
+	if (IF_BONUS)
+		increase_last_frame(env, &start_src);
+	draw_asset(datas, &env->main.tex, (t_coordinates){env->current_pos.x
+		* TILE_SIZE, env->current_pos.y * TILE_SIZE}, start_src);
+}
+
+void	print_img(t_env *env)
+{
+	int	i;
+
+	i = 0;
+	if (!env->win)
+		return ;
+	if (env->imgs[i].img != NULL)
+		mlx_destroy_image(env->mlx, env->imgs[i].img);
+	env->imgs[i].img = mlx_new_image(env->mlx, env->win_max_dimensions.x,
+			env->win_max_dimensions.y);
+	env->imgs[i].addr = mlx_get_data_addr(env->imgs[i].img,
+			&env->imgs[i].bits_per_pixel, &env->imgs[i].line_length,
+			&env->imgs[i].endian);
+	draw_water(env, &env->imgs[i]);
+	draw_objects(env, &env->imgs[i]);
+	draw_main(env, &env->imgs[i]);
+	mlx_put_image_to_window(env->mlx, env->win, env->imgs[i].img, 0, 0);
+	print_action_count(env);
+}
